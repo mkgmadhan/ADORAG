@@ -65,10 +65,11 @@ htmlcov/
 bug_2432_output.txt
 test_*.txt
 
-# Diagnostic scripts (optional - keep if you want to commit them)
+# Diagnostic/test scripts (keep core source files)
 check_*.py
 cleanup_deleted_items.py
 get_bug_*.py
-search_*.py
+search_audit_bugs.py
+search_bugs.py
 show_*.py
 test_improved_search.py
