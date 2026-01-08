@@ -113,10 +113,23 @@ class RAGService:
         
         print(f"[DEBUG RAG] Hybrid search returned {len(relevant_docs)} results")
         print(f"[DEBUG RAG] Filter: {filter_expr}")
+        
+        # Filter out weak matches - only keep results with decent relevance scores
+        # Azure AI Search returns @search.score (higher = more relevant)
+        RELEVANCE_THRESHOLD = 1.0  # Minimum score to be considered relevant
+        
+        if relevant_docs:
+            scores = [doc.get('@search.score', 0) for doc in relevant_docs]
+            print(f"[DEBUG RAG] Search scores: {scores[:5]}")
+            
+            # Filter by relevance threshold
+            relevant_docs = [doc for doc in relevant_docs if doc.get('@search.score', 0) >= RELEVANCE_THRESHOLD]
+            print(f"[DEBUG RAG] After relevance filtering: {len(relevant_docs)} results")
+        
         print(f"[DEBUG RAG] Work item types in results: {[d.get('work_item_type') for d in relevant_docs[:10]]}")
 
         if not relevant_docs:
-            yield "I couldn't find any relevant work items to answer your question. Please try rephrasing or ask about different topics."
+            yield "I couldn't find any relevant work items matching your query. Please try:\n- Using different keywords\n- Being more specific\n- Asking about work items that exist in your project"
             return
 
         # For count queries, get the actual total count from the index
