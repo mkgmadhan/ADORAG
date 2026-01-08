@@ -1,0 +1,74 @@
+# Environment files
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Azure
+.azure/
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# Test output files
+bug_2432_output.txt
+test_*.txt
+
+# Diagnostic scripts (optional - keep if you want to commit them)
+check_*.py
+cleanup_deleted_items.py
+get_bug_*.py
+search_*.py
+show_*.py
+test_improved_search.py
