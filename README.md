@@ -393,6 +393,26 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+### 🤖 Automated Issue Triage
+
+This repository uses an automated GitHub Actions workflow to triage new issues:
+
+- **Automatic labeling** based on issue content (bug, enhancement, documentation, question)
+- **Priority detection** for critical/urgent issues
+- **Component identification** (Azure DevOps, Sync, Search, AI, UI, Deployment, Configuration)
+- **Missing information detection** for bug reports
+- **Instant feedback** with triage comments
+
+When you open an issue, the triage bot will analyze it and add appropriate labels automatically. See [.github/ISSUE_TRIAGE.md](.github/ISSUE_TRIAGE.md) for more details.
+
+To set up the labels in your fork:
+```bash
+cd .github
+./setup-labels.sh
+```
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
