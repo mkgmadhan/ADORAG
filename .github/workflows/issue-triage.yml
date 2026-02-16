@@ -1,0 +1,217 @@
+name: Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    name: Auto-triage new issues
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Analyze and label issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const issueNumber = issue.number;
+            const issueTitle = issue.title.toLowerCase();
+            const issueBody = (issue.body || '').toLowerCase();
+            const issueContent = issueTitle + ' ' + issueBody;
+            
+            console.log(`Triaging issue #${issueNumber}: ${issue.title}`);
+            
+            // Initialize labels array
+            const labelsToAdd = [];
+            
+            // Detect issue type
+            if (issueContent.includes('bug') || 
+                issueContent.includes('error') || 
+                issueContent.includes('fail') ||
+                issueContent.includes('crash') ||
+                issueContent.includes('broken') ||
+                issueContent.includes('not working')) {
+              labelsToAdd.push('bug');
+            } else if (issueContent.includes('feature') || 
+                       issueContent.includes('enhancement') ||
+                       issueContent.includes('add support') ||
+                       issueContent.includes('would like')) {
+              labelsToAdd.push('enhancement');
+            } else if (issueContent.includes('documentation') || 
+                       issueContent.includes('docs') ||
+                       issueContent.includes('readme') ||
+                       issueContent.includes('guide')) {
+              labelsToAdd.push('documentation');
+            } else if (issueContent.includes('question') || 
+                       issueContent.includes('how to') ||
+                       issueContent.includes('how do i') ||
+                       issueContent.includes('help')) {
+              labelsToAdd.push('question');
+            }
+            
+            // Detect priority based on keywords
+            if (issueContent.includes('critical') || 
+                issueContent.includes('urgent') ||
+                issueContent.includes('asap') ||
+                issueContent.includes('security') ||
+                issueContent.includes('data loss')) {
+              labelsToAdd.push('priority: high');
+            } else if (issueContent.includes('important') || 
+                       issueContent.includes('blocker')) {
+              labelsToAdd.push('priority: medium');
+            }
+            
+            // Detect component/area
+            if (issueContent.includes('azure devops') || 
+                issueContent.includes('ado') ||
+                issueContent.includes('work item')) {
+              labelsToAdd.push('area: azure-devops');
+            }
+            
+            if (issueContent.includes('sync') || 
+                issueContent.includes('synchronization') ||
+                issueContent.includes('delta sync')) {
+              labelsToAdd.push('area: sync');
+            }
+            
+            if (issueContent.includes('search') || 
+                issueContent.includes('azure ai search') ||
+                issueContent.includes('vector') ||
+                issueContent.includes('index')) {
+              labelsToAdd.push('area: search');
+            }
+            
+            if (issueContent.includes('openai') || 
+                issueContent.includes('gpt') ||
+                issueContent.includes('llm') ||
+                issueContent.includes('rag') ||
+                issueContent.includes('embedding')) {
+              labelsToAdd.push('area: ai');
+            }
+            
+            if (issueContent.includes('ui') || 
+                issueContent.includes('interface') ||
+                issueContent.includes('streamlit') ||
+                issueContent.includes('display')) {
+              labelsToAdd.push('area: ui');
+            }
+            
+            if (issueContent.includes('deploy') || 
+                issueContent.includes('docker') ||
+                issueContent.includes('container') ||
+                issueContent.includes('azure container apps')) {
+              labelsToAdd.push('area: deployment');
+            }
+            
+            if (issueContent.includes('config') || 
+                issueContent.includes('environment') ||
+                issueContent.includes('.env') ||
+                issueContent.includes('setup')) {
+              labelsToAdd.push('area: configuration');
+            }
+            
+            // Add triage label to indicate automated processing
+            labelsToAdd.push('triage');
+            
+            // Remove duplicates
+            const uniqueLabels = [...new Set(labelsToAdd)];
+            
+            console.log(`Adding labels: ${uniqueLabels.join(', ')}`);
+            
+            // Add labels to the issue
+            if (uniqueLabels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: uniqueLabels
+              });
+            }
+            
+            // Create a comment with triage information
+            const labelList = uniqueLabels.map(label => '- `' + label + '`').join('\n');
+            const triageInfo = '## 🤖 Automated Triage\n\n' +
+              'Thank you for opening this issue! This issue has been automatically triaged with the following labels:\n\n' +
+              labelList + '\n\n' +
+              '**Next Steps:**\n' +
+              '- A maintainer will review this issue and adjust labels if needed\n' +
+              '- Please provide additional details if requested\n' +
+              '- For urgent issues, please include reproduction steps and environment details\n\n' +
+              '---\n' +
+              '*This is an automated message from the issue triage workflow.*';
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: triageInfo
+            });
+            
+            console.log('Issue triage completed successfully');
+
+      - name: Check for missing information
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const issueBody = issue.body || '';
+            const issueTitle = issue.title;
+            
+            // Check if it's a bug report without enough information
+            const labels = issue.labels.map(l => l.name);
+            const isBug = labels.includes('bug');
+            
+            if (isBug) {
+              const hasSteps = issueBody.toLowerCase().includes('steps') || 
+                               issueBody.toLowerCase().includes('reproduce');
+              const hasExpected = issueBody.toLowerCase().includes('expected');
+              const hasActual = issueBody.toLowerCase().includes('actual');
+              const hasEnvironment = issueBody.toLowerCase().includes('environment') ||
+                                     issueBody.toLowerCase().includes('version');
+              
+              // If missing critical information, add a comment
+              if (!hasSteps || !hasExpected || !hasActual) {
+                const missingInfo = [];
+                if (!hasSteps) missingInfo.push('Steps to reproduce');
+                if (!hasExpected) missingInfo.push('Expected behavior');
+                if (!hasActual) missingInfo.push('Actual behavior');
+                
+                const missingInfoList = missingInfo.map(info => '- ' + info).join('\n');
+                const comment = '## ℹ️ Additional Information Needed\n\n' +
+                  'This bug report appears to be missing some important information:\n\n' +
+                  missingInfoList + '\n\n' +
+                  'Please provide:\n' +
+                  '1. **Steps to reproduce**: Clear steps that show how to trigger the bug\n' +
+                  '2. **Expected behavior**: What you expected to happen\n' +
+                  '3. **Actual behavior**: What actually happened\n' +
+                  '4. **Environment details**:\n' +
+                  '   - Python version\n' +
+                  '   - Operating system\n' +
+                  '   - Azure service versions\n' +
+                  '   - Any relevant configuration\n\n' +
+                  'This will help maintainers investigate and resolve the issue faster. Thank you!';
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: comment
+                });
+                
+                // Add needs-info label
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: ['needs-info']
+                });
+              }
+            }

@@ -13,6 +13,8 @@ If you find a bug, please create an issue with:
 - Actual behavior
 - Environment details (Python version, OS, Azure services)
 
+**Note**: When you open an issue, our automated triage workflow will automatically label it based on the content. See [Issue Triage Documentation](.github/ISSUE_TRIAGE.md) for details.
+
 ### Suggesting Features
 
 Feature suggestions are welcome! Please create an issue with:
